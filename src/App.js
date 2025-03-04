@@ -1,5 +1,4 @@
-// src/App.js
-import React, { useState, useEffect, useRef } from 'react'; 
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './App.css';
 
 const GAME_WIDTH = 600;
@@ -12,8 +11,6 @@ const ENEMY_WIDTH = 40;
 const ENEMY_HEIGHT = 40;
 const ENEMY_ROWS = 4;
 const ENEMY_COLS = 8;
-const ENEMY_ROW_SPACING = 60;
-const ENEMY_COL_SPACING = 60;
 
 function App() {
   const [player, setPlayer] = useState({
@@ -25,251 +22,157 @@ function App() {
   const [gameOver, setGameOver] = useState(false);
   const [score, setScore] = useState(0);
   const [gameStarted, setGameStarted] = useState(false);
-  const [formation, setFormation] = useState({
-    direction: 1, // 1 for right, -1 for left
-    moveDown: false,
-    step: 0,
-  });
-  
-  const gameRef = useRef(null);
-  const frameIdRef = useRef(null);
-  const keysPressed = useRef({});
 
-  // Initialize enemies when game starts
+  // Create a stable reference to the player state
+  const playerRef = useRef(player);
   useEffect(() => {
-    if (gameStarted && enemies.length === 0) {
-      initEnemies();
-    }
-  }, [gameStarted]);
+    playerRef.current = player;
+  }, [player]);
 
-  const initEnemies = () => {
+  // Initialize enemies
+  const initEnemies = useCallback(() => {
     const newEnemies = [];
     for (let row = 0; row < ENEMY_ROWS; row++) {
       for (let col = 0; col < ENEMY_COLS; col++) {
         newEnemies.push({
-          x: col * ENEMY_COL_SPACING + 80,
-          y: row * ENEMY_ROW_SPACING + 60,
+          id: `enemy-${row}-${col}`,
+          x: col * (ENEMY_WIDTH + 10) + 50,
+          y: row * (ENEMY_HEIGHT + 10) + 50,
           width: ENEMY_WIDTH,
           height: ENEMY_HEIGHT,
-          row,
-          col,
+          type: row % 3
         });
       }
     }
     setEnemies(newEnemies);
-  };
+  }, []);
 
-  // Set up key listeners
+  // Key event handlers
   useEffect(() => {
     const handleKeyDown = (e) => {
-      keysPressed.current[e.key] = true;
-      
-      // Space key to shoot
-      if (e.key === ' ' && gameStarted && !gameOver) {
-        shoot();
-      }
-      
-      // Enter key to start/restart game
+      // Start game or restart
       if (e.key === 'Enter') {
         if (gameOver) {
           restartGame();
         } else if (!gameStarted) {
           setGameStarted(true);
+          initEnemies();
         }
+      }
+
+      // Shooting mechanism
+      if (e.key === ' ' && gameStarted && !gameOver) {
+        shoot();
       }
     };
 
-    const handleKeyUp = (e) => {
-      keysPressed.current[e.key] = false;
+    const handleKeyPress = (e) => {
+      // Player movement
+      if (gameStarted && !gameOver) {
+        switch (e.key) {
+          case 'ArrowLeft':
+            setPlayer(prev => ({
+              ...prev,
+              x: Math.max(0, prev.x - 10)
+            }));
+            break;
+          case 'ArrowRight':
+            setPlayer(prev => ({
+              ...prev,
+              x: Math.min(GAME_WIDTH - PLAYER_WIDTH, prev.x + 10)
+            }));
+            break;
+          default:
+            break;
+        }
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('keydown', handleKeyPress);
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('keydown', handleKeyPress);
     };
-  }, [gameStarted, gameOver]);
+  }, [gameStarted, gameOver, initEnemies]);
 
-  // Main game loop
+  // Shooting mechanism
+  const shoot = useCallback(() => {
+    const currentPlayer = playerRef.current;
+    setBullets(prevBullets => [
+      ...prevBullets,
+      {
+        id: `bullet-${Date.now()}`,
+        x: currentPlayer.x + PLAYER_WIDTH / 2 - BULLET_WIDTH / 2,
+        y: currentPlayer.y
+      }
+    ]);
+  }, []);
+
+  // Game loop for bullets and collisions
   useEffect(() => {
     if (!gameStarted || gameOver) return;
 
-    let lastTime = 0;
-    const FRAME_RATE = 1000 / 60; // 60 FPS
+    const gameLoop = setInterval(() => {
+      // Move bullets upward
+      setBullets(prevBullets => 
+        prevBullets
+          .map(bullet => ({ ...bullet, y: bullet.y - 10 }))
+          .filter(bullet => bullet.y > 0)
+      );
 
-    const gameLoop = (timestamp) => {
-      const deltaTime = timestamp - lastTime;
-      
-      if (deltaTime >= FRAME_RATE) {
-        updateGame();
-        lastTime = timestamp;
-      }
-      
-      frameIdRef.current = requestAnimationFrame(gameLoop);
-    };
+      // Check bullet-enemy collisions
+      setBullets(prevBullets => {
+        let updatedBullets = [...prevBullets];
+        let updatedEnemies = [...enemies];
 
-    frameIdRef.current = requestAnimationFrame(gameLoop);
-
-    return () => {
-      if (frameIdRef.current) {
-        cancelAnimationFrame(frameIdRef.current);
-      }
-    };
-  }, [gameStarted, gameOver]);
-
-  const updateGame = () => {
-    // Move player based on key presses
-    if (keysPressed.current.ArrowLeft) {
-      setPlayer((prev) => ({
-        ...prev,
-        x: Math.max(0, prev.x - 8),
-      }));
-    }
-    if (keysPressed.current.ArrowRight) {
-      setPlayer((prev) => ({
-        ...prev,
-        x: Math.min(GAME_WIDTH - PLAYER_WIDTH, prev.x + 8),
-      }));
-    }
-
-    // Update bullets
-    setBullets((prevBullets) => {
-      return prevBullets
-        .map((bullet) => ({
-          ...bullet,
-          y: bullet.y - 10, // Bullet speed
-        }))
-        .filter((bullet) => bullet.y > 0);
-    });
-
-    // Move enemies in formation
-    updateEnemyFormation();
-
-    // Check collisions
-    checkCollisions();
-  };
-
-  const updateEnemyFormation = () => {
-    // Only move enemies every few frames for a slower pace
-    setFormation((prev) => {
-      const newStep = prev.step + 1;
-      if (newStep < 20) {
-        return { ...prev, step: newStep };
-      }
-
-      let moveDown = false;
-      let newDirection = prev.direction;
-
-      // Check if formation should change direction
-      const leftmostEnemy = Math.min(...enemies.map((e) => e.x));
-      const rightmostEnemy = Math.max(...enemies.map((e) => e.x + ENEMY_WIDTH));
-
-      if (rightmostEnemy + 5 >= GAME_WIDTH && prev.direction === 1) {
-        newDirection = -1;
-        moveDown = true;
-      } else if (leftmostEnemy - 5 <= 0 && prev.direction === -1) {
-        newDirection = 1;
-        moveDown = true;
-      }
-
-      setEnemies((prevEnemies) => {
-        return prevEnemies.map((enemy) => {
-          return {
-            ...enemy,
-            x: enemy.x + (moveDown ? 0 : 5 * newDirection),
-            y: enemy.y + (moveDown ? 20 : 0),
-          };
-        });
-      });
-
-      return { direction: newDirection, moveDown: false, step: 0 };
-    });
-  };
-
-  const checkCollisions = () => {
-    // Check for bullet collisions with enemies
-    let newScore = score;
-    const newEnemies = [...enemies];
-    const newBullets = [...bullets];
-
-    for (let i = newBullets.length - 1; i >= 0; i--) {
-      const bullet = newBullets[i];
-      
-      for (let j = newEnemies.length - 1; j >= 0; j--) {
-        const enemy = newEnemies[j];
-        
-        if (
-          bullet.x < enemy.x + enemy.width &&
-          bullet.x + BULLET_WIDTH > enemy.x &&
-          bullet.y < enemy.y + enemy.height &&
-          bullet.y + BULLET_HEIGHT > enemy.y
-        ) {
-          // Collision detected
-          newEnemies.splice(j, 1);
-          newBullets.splice(i, 1);
-          newScore += 100;
-          break;
+        for (let i = updatedBullets.length - 1; i >= 0; i--) {
+          const bullet = updatedBullets[i];
+          
+          for (let j = updatedEnemies.length - 1; j >= 0; j--) {
+            const enemy = updatedEnemies[j];
+            
+            if (
+              bullet.x < enemy.x + enemy.width &&
+              bullet.x + BULLET_WIDTH > enemy.x &&
+              bullet.y < enemy.y + enemy.height &&
+              bullet.y + BULLET_HEIGHT > enemy.y
+            ) {
+              // Remove bullet and enemy
+              updatedBullets.splice(i, 1);
+              updatedEnemies.splice(j, 1);
+              setScore(prev => prev + 100);
+              break;
+            }
+          }
         }
-      }
-    }
 
-    // Check if player is hit by an enemy
-    const playerHit = newEnemies.some(
-      (enemy) =>
-        enemy.x < player.x + PLAYER_WIDTH &&
-        enemy.x + enemy.width > player.x &&
-        enemy.y < player.y + PLAYER_HEIGHT &&
-        enemy.y + enemy.height > player.y
-    );
+        setEnemies(updatedEnemies);
+        return updatedBullets;
+      });
+    }, 50);
 
-    // Check if enemies reached the bottom
-    const enemyReachedBottom = newEnemies.some(
-      (enemy) => enemy.y + enemy.height >= player.y
-    );
+    return () => clearInterval(gameLoop);
+  }, [gameStarted, gameOver, enemies]);
 
-    if (playerHit || enemyReachedBottom) {
-      setGameOver(true);
-    }
-
-    // Check if all enemies are destroyed
-    if (newEnemies.length === 0) {
-      initEnemies();
-    }
-
-    setBullets(newBullets);
-    setEnemies(newEnemies);
-    setScore(newScore);
-  };
-
-  const shoot = () => {
-    setBullets((prevBullets) => [
-      ...prevBullets,
-      {
-        x: player.x + PLAYER_WIDTH / 2 - BULLET_WIDTH / 2,
-        y: player.y - BULLET_HEIGHT,
-      },
-    ]);
-  };
-
+  // Restart game
   const restartGame = () => {
     setGameOver(false);
     setScore(0);
-    initEnemies(); // Ensure enemies are created when restarting
+    setGameStarted(true);
+    initEnemies();
     setPlayer({
       x: GAME_WIDTH / 2 - PLAYER_WIDTH / 2,
       y: GAME_HEIGHT - PLAYER_HEIGHT - 20,
     });
     setBullets([]);
-    setGameStarted(true); // Explicitly set game as started
   };
 
   return (
     <div className="game-container">
       <div 
         className="game" 
-        ref={gameRef}
         style={{ width: GAME_WIDTH, height: GAME_HEIGHT }}
       >
         {!gameStarted ? (
@@ -281,6 +184,8 @@ function App() {
         ) : (
           <>
             <div className="score">Score: {score}</div>
+            
+            {/* Player Ship */}
             <div 
               className="player" 
               style={{ 
@@ -291,9 +196,10 @@ function App() {
               }}
             />
             
-            {bullets.map((bullet, index) => (
+            {/* Bullets */}
+            {bullets.map((bullet) => (
               <div
-                key={index}
+                key={bullet.id}
                 className="bullet"
                 style={{ 
                   left: bullet.x, 
@@ -304,10 +210,11 @@ function App() {
               />
             ))}
             
-            {enemies.map((enemy, index) => (
+            {/* Enemies */}
+            {enemies.map((enemy) => (
               <div
-                key={index}
-                className={`enemy enemy-type-${enemy.row % 3}`}
+                key={enemy.id}
+                className={`enemy enemy-type-${enemy.type}`}
                 style={{ 
                   left: enemy.x, 
                   top: enemy.y,
