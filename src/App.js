@@ -27,9 +27,9 @@ function App() {
   // Enemy movement state
   const [enemyMovement, setEnemyMovement] = useState({
     direction: 1,  // 1 for right, -1 for left
-    horizontalStep: 0,
-    verticalStep: 0,
-    canMoveDown: false
+    moveCounter: 0,
+    horizontalOffset: 0,
+    verticalOffset: 0
   });
 
   // Initialize enemies
@@ -52,9 +52,9 @@ function App() {
     // Reset enemy movement
     setEnemyMovement({
       direction: 1,
-      horizontalStep: 0,
-      verticalStep: 0,
-      canMoveDown: false
+      moveCounter: 0,
+      horizontalOffset: 0,
+      verticalOffset: 0
     });
   }, []);
 
@@ -140,19 +140,18 @@ function App() {
 
       // Enemy movement logic
       setEnemyMovement(prev => {
-        let newDirection = prev.direction;
-        let newHorizontalStep = prev.horizontalStep + 1;
-        let newVerticalStep = prev.verticalStep;
-        let canMoveDown = prev.canMoveDown;
-
-        // Move enemies every 30 frames
-        if (newHorizontalStep < 30) {
-          return { ...prev, horizontalStep: newHorizontalStep };
+        const moveCounter = prev.moveCounter + 1;
+        
+        // Move every 30 frames
+        if (moveCounter < 30) {
+          return { ...prev, moveCounter };
         }
 
-        // Reset horizontal step
-        newHorizontalStep = 0;
-
+        // Determine movement
+        let newDirection = prev.direction;
+        let horizontalOffset = prev.horizontalOffset + (5 * prev.direction);
+        let verticalOffset = prev.verticalOffset;
+        
         // Check formation boundaries
         const leftmostEnemy = Math.min(...enemies.map(e => e.x));
         const rightmostEnemy = Math.max(...enemies.map(e => e.x + ENEMY_WIDTH));
@@ -160,17 +159,19 @@ function App() {
         // Change direction at screen edges
         if (rightmostEnemy >= GAME_WIDTH - 10 && newDirection === 1) {
           newDirection = -1;
-          canMoveDown = true;
+          horizontalOffset = 0;
+          verticalOffset += 20;
         } else if (leftmostEnemy <= 10 && newDirection === -1) {
           newDirection = 1;
-          canMoveDown = true;
+          horizontalOffset = 0;
+          verticalOffset += 20;
         }
 
         return { 
           direction: newDirection, 
-          horizontalStep: newHorizontalStep,
-          verticalStep: newVerticalStep,
-          canMoveDown
+          moveCounter: 0,
+          horizontalOffset,
+          verticalOffset
         };
       });
 
@@ -178,8 +179,8 @@ function App() {
       setEnemies(prevEnemies => 
         prevEnemies.map(enemy => ({
           ...enemy,
-          x: enemy.x + (enemyMovement.canMoveDown ? 0 : 5 * enemyMovement.direction),
-          y: enemy.y + (enemyMovement.canMoveDown ? 20 : 0)
+          x: enemy.x + (enemyMovement.horizontalOffset - (enemy.x - (enemy.col * (ENEMY_WIDTH + 10) + 50))),
+          y: enemy.y + enemyMovement.verticalOffset
         }))
       );
 
