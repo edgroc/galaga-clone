@@ -1,5 +1,5 @@
 // src/App.js
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react'; 
 import './App.css';
 
 const GAME_WIDTH = 600;
@@ -35,9 +35,9 @@ function App() {
   const frameIdRef = useRef(null);
   const keysPressed = useRef({});
 
-  // Initialize enemies
+  // Initialize enemies when game starts
   useEffect(() => {
-    if (gameStarted) {
+    if (gameStarted && enemies.length === 0) {
       initEnemies();
     }
   }, [gameStarted]);
@@ -256,12 +256,13 @@ function App() {
   const restartGame = () => {
     setGameOver(false);
     setScore(0);
-    initEnemies();
+    initEnemies(); // Ensure enemies are created when restarting
     setPlayer({
       x: GAME_WIDTH / 2 - PLAYER_WIDTH / 2,
       y: GAME_HEIGHT - PLAYER_HEIGHT - 20,
     });
     setBullets([]);
+    setGameStarted(true); // Explicitly set game as started
   };
 
   return (
