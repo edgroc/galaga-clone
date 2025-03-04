@@ -22,6 +22,14 @@ function App() {
   const [gameOver, setGameOver] = useState(false);
   const [score, setScore] = useState(0);
   const [gameStarted, setGameStarted] = useState(false);
+  const [level, setLevel] = useState(1);
+
+  // Enemy movement state
+  const [enemyFormation, setEnemyFormation] = useState({
+    direction: 1, // 1 for right, -1 for left
+    moveDown: false,
+    stepCount: 0
+  });
 
   // Create a stable reference to the player state
   const playerRef = useRef(player);
@@ -29,11 +37,14 @@ function App() {
     playerRef.current = player;
   }, [player]);
 
-  // Initialize enemies
+  // Initialize enemies with increasing difficulty per level
   const initEnemies = useCallback(() => {
+    const rowCount = Math.min(ENEMY_ROWS + Math.floor((level - 1) / 2), 6);
+    const colCount = Math.min(ENEMY_COLS + Math.floor(level / 2), 10);
+    
     const newEnemies = [];
-    for (let row = 0; row < ENEMY_ROWS; row++) {
-      for (let col = 0; col < ENEMY_COLS; col++) {
+    for (let row = 0; row < rowCount; row++) {
+      for (let col = 0; col < colCount; col++) {
         newEnemies.push({
           id: `enemy-${row}-${col}`,
           x: col * (ENEMY_WIDTH + 10) + 50,
@@ -45,7 +56,14 @@ function App() {
       }
     }
     setEnemies(newEnemies);
-  }, []);
+    
+    // Reset formation state
+    setEnemyFormation({
+      direction: 1,
+      moveDown: false,
+      stepCount: 0
+    });
+  }, [level]);
 
   // Key event handlers
   useEffect(() => {
@@ -110,7 +128,7 @@ function App() {
     ]);
   }, []);
 
-  // Game loop for bullets and collisions
+  // Game loop for bullets, collisions, and enemy movement
   useEffect(() => {
     if (!gameStarted || gameOver) return;
 
@@ -120,6 +138,48 @@ function App() {
         prevBullets
           .map(bullet => ({ ...bullet, y: bullet.y - 10 }))
           .filter(bullet => bullet.y > 0)
+      );
+
+      // Enemy movement logic
+      setEnemyFormation(prev => {
+        let newDirection = prev.direction;
+        let moveDown = false;
+        let newStepCount = prev.stepCount + 1;
+
+        // Move every 30 frames
+        if (newStepCount < 30) {
+          return { ...prev, stepCount: newStepCount };
+        }
+
+        // Reset step count
+        newStepCount = 0;
+
+        // Check formation boundaries
+        const leftmostEnemy = Math.min(...enemies.map(e => e.x));
+        const rightmostEnemy = Math.max(...enemies.map(e => e.x + ENEMY_WIDTH));
+
+        if (rightmostEnemy + 5 >= GAME_WIDTH && prev.direction === 1) {
+          newDirection = -1;
+          moveDown = true;
+        } else if (leftmostEnemy - 5 <= 0 && prev.direction === -1) {
+          newDirection = 1;
+          moveDown = true;
+        }
+
+        return { 
+          direction: newDirection, 
+          moveDown, 
+          stepCount: newStepCount 
+        };
+      });
+
+      // Move enemies based on formation state
+      setEnemies(prevEnemies => 
+        prevEnemies.map(enemy => ({
+          ...enemy,
+          x: enemy.x + (enemyFormation.moveDown ? 0 : 5 * enemyFormation.direction),
+          y: enemy.y + (enemyFormation.moveDown ? 20 : 0)
+        }))
       );
 
       // Check bullet-enemy collisions
@@ -148,18 +208,34 @@ function App() {
           }
         }
 
+        // Check if all enemies are destroyed
+        if (updatedEnemies.length === 0) {
+          setLevel(prev => prev + 1);
+          initEnemies();
+        }
+
         setEnemies(updatedEnemies);
         return updatedBullets;
       });
+
+      // Check if enemies reach the bottom
+      const enemyReachedBottom = enemies.some(
+        enemy => enemy.y + enemy.height >= player.y
+      );
+
+      if (enemyReachedBottom) {
+        setGameOver(true);
+      }
     }, 50);
 
     return () => clearInterval(gameLoop);
-  }, [gameStarted, gameOver, enemies]);
+  }, [gameStarted, gameOver, enemies, player, initEnemies]);
 
   // Restart game
   const restartGame = () => {
     setGameOver(false);
     setScore(0);
+    setLevel(1);
     setGameStarted(true);
     initEnemies();
     setPlayer({
@@ -183,7 +259,10 @@ function App() {
           </div>
         ) : (
           <>
-            <div className="score">Score: {score}</div>
+            <div className="score-level">
+              <div>Score: {score}</div>
+              <div>Level: {level}</div>
+            </div>
             
             {/* Player Ship */}
             <div 
@@ -228,6 +307,7 @@ function App() {
               <div className="game-over">
                 <h1>Game Over</h1>
                 <p>Final Score: {score}</p>
+                <p>Final Level: {level}</p>
                 <p>Press ENTER to restart</p>
               </div>
             )}
