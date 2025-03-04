@@ -25,26 +25,18 @@ function App() {
   const [level, setLevel] = useState(1);
 
   // Enemy movement state
-  const [enemyFormation, setEnemyFormation] = useState({
-    direction: 1, // 1 for right, -1 for left
-    moveDown: false,
-    stepCount: 0
+  const [enemyMovement, setEnemyMovement] = useState({
+    direction: 1,  // 1 for right, -1 for left
+    horizontalStep: 0,
+    verticalStep: 0,
+    canMoveDown: false
   });
 
-  // Create a stable reference to the player state
-  const playerRef = useRef(player);
-  useEffect(() => {
-    playerRef.current = player;
-  }, [player]);
-
-  // Initialize enemies with increasing difficulty per level
+  // Initialize enemies
   const initEnemies = useCallback(() => {
-    const rowCount = Math.min(ENEMY_ROWS + Math.floor((level - 1) / 2), 6);
-    const colCount = Math.min(ENEMY_COLS + Math.floor(level / 2), 10);
-    
     const newEnemies = [];
-    for (let row = 0; row < rowCount; row++) {
-      for (let col = 0; col < colCount; col++) {
+    for (let row = 0; row < ENEMY_ROWS; row++) {
+      for (let col = 0; col < ENEMY_COLS; col++) {
         newEnemies.push({
           id: `enemy-${row}-${col}`,
           x: col * (ENEMY_WIDTH + 10) + 50,
@@ -57,13 +49,14 @@ function App() {
     }
     setEnemies(newEnemies);
     
-    // Reset formation state
-    setEnemyFormation({
+    // Reset enemy movement
+    setEnemyMovement({
       direction: 1,
-      moveDown: false,
-      stepCount: 0
+      horizontalStep: 0,
+      verticalStep: 0,
+      canMoveDown: false
     });
-  }, [level]);
+  }, []);
 
   // Key event handlers
   useEffect(() => {
@@ -81,6 +74,12 @@ function App() {
       // Shooting mechanism
       if (e.key === ' ' && gameStarted && !gameOver) {
         shoot();
+      }
+
+      // Exit game with Escape key
+      if (e.key === 'Escape') {
+        setGameStarted(false);
+        setGameOver(true);
       }
     };
 
@@ -117,23 +116,22 @@ function App() {
 
   // Shooting mechanism
   const shoot = useCallback(() => {
-    const currentPlayer = playerRef.current;
     setBullets(prevBullets => [
       ...prevBullets,
       {
         id: `bullet-${Date.now()}`,
-        x: currentPlayer.x + PLAYER_WIDTH / 2 - BULLET_WIDTH / 2,
-        y: currentPlayer.y
+        x: player.x + PLAYER_WIDTH / 2 - BULLET_WIDTH / 2,
+        y: player.y
       }
     ]);
-  }, []);
+  }, [player]);
 
-  // Game loop for bullets, collisions, and enemy movement
+  // Game loop
   useEffect(() => {
     if (!gameStarted || gameOver) return;
 
     const gameLoop = setInterval(() => {
-      // Move bullets upward
+      // Move bullets
       setBullets(prevBullets => 
         prevBullets
           .map(bullet => ({ ...bullet, y: bullet.y - 10 }))
@@ -141,48 +139,51 @@ function App() {
       );
 
       // Enemy movement logic
-      setEnemyFormation(prev => {
+      setEnemyMovement(prev => {
         let newDirection = prev.direction;
-        let moveDown = false;
-        let newStepCount = prev.stepCount + 1;
+        let newHorizontalStep = prev.horizontalStep + 1;
+        let newVerticalStep = prev.verticalStep;
+        let canMoveDown = prev.canMoveDown;
 
-        // Move every 30 frames
-        if (newStepCount < 30) {
-          return { ...prev, stepCount: newStepCount };
+        // Move enemies every 30 frames
+        if (newHorizontalStep < 30) {
+          return { ...prev, horizontalStep: newHorizontalStep };
         }
 
-        // Reset step count
-        newStepCount = 0;
+        // Reset horizontal step
+        newHorizontalStep = 0;
 
         // Check formation boundaries
         const leftmostEnemy = Math.min(...enemies.map(e => e.x));
         const rightmostEnemy = Math.max(...enemies.map(e => e.x + ENEMY_WIDTH));
 
-        if (rightmostEnemy + 5 >= GAME_WIDTH && prev.direction === 1) {
+        // Change direction at screen edges
+        if (rightmostEnemy >= GAME_WIDTH - 10 && newDirection === 1) {
           newDirection = -1;
-          moveDown = true;
-        } else if (leftmostEnemy - 5 <= 0 && prev.direction === -1) {
+          canMoveDown = true;
+        } else if (leftmostEnemy <= 10 && newDirection === -1) {
           newDirection = 1;
-          moveDown = true;
+          canMoveDown = true;
         }
 
         return { 
           direction: newDirection, 
-          moveDown, 
-          stepCount: newStepCount 
+          horizontalStep: newHorizontalStep,
+          verticalStep: newVerticalStep,
+          canMoveDown
         };
       });
 
-      // Move enemies based on formation state
+      // Update enemy positions
       setEnemies(prevEnemies => 
         prevEnemies.map(enemy => ({
           ...enemy,
-          x: enemy.x + (enemyFormation.moveDown ? 0 : 5 * enemyFormation.direction),
-          y: enemy.y + (enemyFormation.moveDown ? 20 : 0)
+          x: enemy.x + (enemyMovement.canMoveDown ? 0 : 5 * enemyMovement.direction),
+          y: enemy.y + (enemyMovement.canMoveDown ? 20 : 0)
         }))
       );
 
-      // Check bullet-enemy collisions
+      // Collision detection and level management
       setBullets(prevBullets => {
         let updatedBullets = [...prevBullets];
         let updatedEnemies = [...enemies];
@@ -210,6 +211,7 @@ function App() {
 
         // Check if all enemies are destroyed
         if (updatedEnemies.length === 0) {
+          // Increment level and reinitialize enemies
           setLevel(prev => prev + 1);
           initEnemies();
         }
@@ -256,6 +258,7 @@ function App() {
             <h1>Galaga Clone</h1>
             <p>Press ENTER to start</p>
             <p>Use LEFT/RIGHT arrows to move, SPACE to shoot</p>
+            <p>Press ESC to exit game</p>
           </div>
         ) : (
           <>
