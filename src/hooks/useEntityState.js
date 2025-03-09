@@ -309,6 +309,15 @@ export function useEntityState(level) {
     powerUps,
     explosions,
     
+    // Entity state setters
+    setPlayer,
+    setBullets,
+    setEnemyBullets,
+    setEnemies,
+    setDiveBombers,
+    setPowerUps,
+    setExplosions,
+    
     // Entity creation
     initEnemies,
     resetEntities,

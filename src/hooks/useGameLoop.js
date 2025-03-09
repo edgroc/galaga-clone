@@ -23,6 +23,15 @@ export function useGameLoop() {
     powerUps,
     explosions,
     
+    // Entity state setters
+    setPlayer,
+    setBullets,
+    setEnemyBullets,
+    setEnemies,
+    setDiveBombers,
+    setPowerUps,
+    setExplosions,
+    
     // Entity creation methods
     initEnemies,
     resetEntities,
@@ -149,7 +158,7 @@ export function useGameLoop() {
         state.level,
         // Remove bullet callback
         (index) => {
-          entityState.setBullets(prev => {
+          setBullets(prev => {
             const newBullets = [...prev];
             newBullets.splice(index, 1);
             return newBullets;
@@ -157,7 +166,7 @@ export function useGameLoop() {
         },
         // Remove enemy callback
         (index) => {
-          entityState.setEnemies(prev => {
+          setEnemies(prev => {
             const newEnemies = [...prev];
             newEnemies.splice(index, 1);
             return newEnemies;
@@ -165,7 +174,7 @@ export function useGameLoop() {
         },
         // Damage enemy callback
         (index) => {
-          entityState.setEnemies(prev => {
+          setEnemies(prev => {
             const newEnemies = [...prev];
             newEnemies[index] = {
               ...newEnemies[index],
@@ -183,7 +192,7 @@ export function useGameLoop() {
         createExplosion,
         // Remove bullet callback
         (index) => {
-          entityState.setBullets(prev => {
+          setBullets(prev => {
             const newBullets = [...prev];
             newBullets.splice(index, 1);
             return newBullets;
@@ -191,7 +200,7 @@ export function useGameLoop() {
         },
         // Remove diveBomber callback
         (index) => {
-          entityState.setDiveBombers(prev => {
+          setDiveBombers(prev => {
             const newDiveBombers = [...prev];
             newDiveBombers.splice(index, 1);
             return newDiveBombers;
@@ -206,7 +215,7 @@ export function useGameLoop() {
         createExplosion,
         // Remove enemyBullet callback
         (index) => {
-          entityState.setEnemyBullets(prev => {
+          setEnemyBullets(prev => {
             const newEnemyBullets = [...prev];
             newEnemyBullets.splice(index, 1);
             return newEnemyBullets;
@@ -221,7 +230,7 @@ export function useGameLoop() {
         createExplosion,
         // Remove diveBomber callback
         (index) => {
-          entityState.setDiveBombers(prev => {
+          setDiveBombers(prev => {
             const newDiveBombers = [...prev];
             newDiveBombers.splice(index, 1);
             return newDiveBombers;
@@ -236,7 +245,7 @@ export function useGameLoop() {
         createExplosion,
         // Remove powerUp callback
         (index) => {
-          entityState.setPowerUps(prev => {
+          setPowerUps(prev => {
             const newPowerUps = [...prev];
             newPowerUps.splice(index, 1);
             return newPowerUps;
