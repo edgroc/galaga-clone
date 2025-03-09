@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useGameState, GameActions } from './useGameState';
 import { useEntityState } from './useEntityState';
 import { useInputSystem } from './useInputSystem';
@@ -24,18 +24,14 @@ export function useGameLoop() {
     explosions,
     formationDirection,
     
-    // Entity state setters
-    setPlayer,
+    // Entity state setters - only include the ones we use
     setBullets,
     setEnemyBullets,
     setEnemies,
     setDiveBombers,
     setPowerUps,
-    setExplosions,
-    setFormationDirection,
     
     // Entity creation methods
-    initEnemies,
     resetEntities,
     createPlayerBullet,
     createEnemyBullet,
@@ -69,13 +65,18 @@ export function useGameLoop() {
   // Game state references
   const lastEnemyShootTime = useRef(0);
   const frameCounter = useRef(0);
+
+  // Memoized callback for entity reset to include in dependency array
+  const resetEntitiesCallback = useCallback(() => {
+    resetEntities();
+  }, [resetEntities, state.level]);
   
   // Initialize level
   useEffect(() => {
     if (state.status === 'playing') {
-      resetEntities();
+      resetEntitiesCallback();
     }
-  }, [state.status, state.level, resetEntities]);
+  }, [state.status, state.level, resetEntitiesCallback]);
   
   // Main game loop
   useEffect(() => {
@@ -139,7 +140,7 @@ export function useGameLoop() {
       // 8. Check enemy boundaries and update movement
       // Only move enemies every several frames to control speed
       if (frameCounter.current % 30 === 0) { // Adjust this value to change enemy movement speed
-        const { hitBoundary, moveDown } = checkEnemyBoundaries();
+        const { moveDown } = checkEnemyBoundaries();
         updateEnemyPositions(moveDown);
       }
       
@@ -302,7 +303,12 @@ export function useGameLoop() {
     checkPlayerDiveBomberCollisions,
     checkPlayerPowerUpCollisions,
     checkEnemiesReachedBottom,
-    dispatch
+    dispatch,
+    setBullets,
+    setEnemyBullets,
+    setEnemies,
+    setDiveBombers,
+    setPowerUps
   ]);
   
   return {
