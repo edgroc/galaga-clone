@@ -22,6 +22,7 @@ export function useGameLoop() {
     diveBombers,
     powerUps,
     explosions,
+    formationDirection,
     
     // Entity state setters
     setPlayer,
@@ -31,6 +32,7 @@ export function useGameLoop() {
     setDiveBombers,
     setPowerUps,
     setExplosions,
+    setFormationDirection,
     
     // Entity creation methods
     initEnemies,
@@ -65,9 +67,8 @@ export function useGameLoop() {
   } = useCollision();
   
   // Game state references
-  const enemyDirection = useRef(1);
   const lastEnemyShootTime = useRef(0);
-  const moveDownThisFrame = useRef(false);
+  const frameCounter = useRef(0);
   
   // Initialize level
   useEffect(() => {
@@ -81,6 +82,9 @@ export function useGameLoop() {
     if (state.status !== 'playing') return;
     
     const gameLoop = setInterval(() => {
+      // Increment frame counter
+      frameCounter.current += 1;
+      
       // Get difficulty parameters for current level
       const { enemyFireRate, diveBomberChance, powerUpChance } = {
         enemyFireRate: DIFFICULTY.enemyFireRate(state.level),
@@ -132,18 +136,15 @@ export function useGameLoop() {
         createPowerUp();
       }
       
-      // 8. Check enemy boundaries and update direction
-      const { hitBoundary, direction } = checkEnemyBoundaries();
-      if (hitBoundary) {
-        enemyDirection.current = direction;
-        moveDownThisFrame.current = true;
-      } else {
-        moveDownThisFrame.current = false;
+      // 8. Check enemy boundaries and update movement
+      // Only move enemies every several frames to control speed
+      if (frameCounter.current % 30 === 0) { // Adjust this value to change enemy movement speed
+        const { hitBoundary, moveDown } = checkEnemyBoundaries();
+        updateEnemyPositions(moveDown);
       }
       
       // 9. Update entity positions
       updateBullets();
-      updateEnemyPositions(enemyDirection.current, moveDownThisFrame.current);
       updateDiveBombers();
       updatePowerUps();
       updateExplosions();
@@ -280,6 +281,7 @@ export function useGameLoop() {
     diveBombers,
     powerUps,
     explosions,
+    formationDirection,
     canFire,
     updatePlayerPosition,
     updateBullets,

@@ -22,6 +22,9 @@ export function useEntityState(level) {
   const [powerUps, setPowerUps] = useState([]);
   const [explosions, setExplosions] = useState([]);
   
+  // Track enemy formation direction state
+  const [formationDirection, setFormationDirection] = useState(1); // 1 = right, -1 = left
+  
   // Initialize enemies for current level
   const initEnemies = useCallback(() => {
     const { rows, cols } = DIFFICULTY.enemyCount(level);
@@ -42,6 +45,7 @@ export function useEntityState(level) {
     }
     
     setEnemies(newEnemies);
+    setFormationDirection(1); // Reset direction when initializing
   }, [level]);
   
   // Reset all entities (called when starting a new game/level)
@@ -210,17 +214,17 @@ export function useEntityState(level) {
   }, []);
   
   // Update enemy positions
-  const updateEnemyPositions = useCallback((direction, moveDown) => {
+  const updateEnemyPositions = useCallback((moveDown = false) => {
     const speed = DIFFICULTY.enemySpeed(level);
     
     setEnemies(prev => 
       prev.map(enemy => ({
         ...enemy,
-        x: enemy.x + (speed * direction),
+        x: enemy.x + (speed * formationDirection),
         y: moveDown ? enemy.y + 20 : enemy.y
       }))
     );
-  }, [level]);
+  }, [level, formationDirection]);
   
   // Update dive bomber positions
   const updateDiveBombers = useCallback(() => {
@@ -271,22 +275,36 @@ export function useEntityState(level) {
   
   // Check for enemy-boundary collisions
   const checkEnemyBoundaries = useCallback(() => {
-    if (enemies.length === 0) return { hitBoundary: false, direction: 1 };
+    if (enemies.length === 0) return { hitBoundary: false, moveDown: false };
     
     const leftmostEnemy = Math.min(...enemies.map(e => e.x));
     const rightmostEnemy = Math.max(...enemies.map(e => e.x + e.width));
-    const currentDirection = rightmostEnemy - leftmostEnemy > 0 ? 1 : -1;
     
-    if (rightmostEnemy >= CONFIG.game.width - 10 && currentDirection === 1) {
-      return { hitBoundary: true, direction: -1 };
+    let hitBoundary = false;
+    let moveDown = false;
+    let newDirection = formationDirection;
+    
+    // Check right boundary
+    if (rightmostEnemy >= CONFIG.game.width - 10 && formationDirection === 1) {
+      hitBoundary = true;
+      moveDown = true;
+      newDirection = -1;
     }
     
-    if (leftmostEnemy <= 10 && currentDirection === -1) {
-      return { hitBoundary: true, direction: 1 };
+    // Check left boundary
+    if (leftmostEnemy <= 10 && formationDirection === -1) {
+      hitBoundary = true;
+      moveDown = true;
+      newDirection = 1;
     }
     
-    return { hitBoundary: false, direction: currentDirection };
-  }, [enemies]);
+    // Update formation direction if boundary hit
+    if (hitBoundary) {
+      setFormationDirection(newDirection);
+    }
+    
+    return { hitBoundary, moveDown };
+  }, [enemies, formationDirection]);
   
   // Clear all enemies (used for special weapons)
   const clearAllEnemies = useCallback(() => {
@@ -308,6 +326,7 @@ export function useEntityState(level) {
     diveBombers,
     powerUps,
     explosions,
+    formationDirection,
     
     // Entity state setters
     setPlayer,
@@ -317,6 +336,7 @@ export function useEntityState(level) {
     setDiveBombers,
     setPowerUps,
     setExplosions,
+    setFormationDirection,
     
     // Entity creation
     initEnemies,
