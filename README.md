@@ -59,18 +59,18 @@ This project can be deployed to GitHub Pages:
 'npm run deploy'
 
 ## Project Structure
-'''├── public/           # Static assets
-├── src/              # Source files
-│   ├── assets/       # Images and other assets
-│   ├── components/   # React components
-│   ├── hooks/        # Custom React hooks
-│   ├── config/       # Game configuration files
-│   ├── utils/        # Utility functions
-│   ├── App.jsx       # Main App component
-│   └── main.jsx      # Entry point
-├── index.html        # HTML template
-├── vite.config.js    # Vite configuration
-└── package.json      # Dependencies and scripts'''
+├── public/           # Static assets  
+├── src/              # Source files  
+│   ├── assets/       # Images and other assets  
+│   ├── components/   # React components  
+│   ├── hooks/        # Custom React hooks  
+│   ├── config/       # Game configuration files  
+│   ├── utils/        # Utility functions  
+│   ├── App.jsx       # Main App component  
+│   └── main.jsx      # Entry point  
+├── index.html        # HTML template  
+├── vite.config.js    # Vite configuration  
+└── package.json      # Dependencies and scripts  
 
 ## Game Mechanics
 
