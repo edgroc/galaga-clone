@@ -15,12 +15,12 @@ You can play the game online at: https://edgroc.github.io/galaga-clone/
 
 ## Controls
 
-**LEFT/RIGHT ARROW KEYS**: Move your spaceship
-**SPACE**: Fire weapons
-**Z**: Activate special weapon (when available)
-**ESC**: Exit current game
-**ENTER**: Start game / Restart after game over
-**P**: Pause/unpause game
+**LEFT/RIGHT ARROW KEYS**: Move your spaceship  
+**SPACE**: Fire weapons  
+**Z**: Activate special weapon (when available)  
+**ESC**: Exit current game  
+**ENTER**: Start game / Restart after game over  
+**P**: Pause/unpause game  
 
 ## Development
 This project was built with:
@@ -59,7 +59,7 @@ This project can be deployed to GitHub Pages:
 'npm run deploy'
 
 ## Project Structure
-├── public/           # Static assets
+'''├── public/           # Static assets
 ├── src/              # Source files
 │   ├── assets/       # Images and other assets
 │   ├── components/   # React components
@@ -70,7 +70,7 @@ This project can be deployed to GitHub Pages:
 │   └── main.jsx      # Entry point
 ├── index.html        # HTML template
 ├── vite.config.js    # Vite configuration
-└── package.json      # Dependencies and scripts
+└── package.json      # Dependencies and scripts'''
 
 ## Game Mechanics
 
