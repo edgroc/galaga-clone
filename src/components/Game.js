@@ -1,6 +1,8 @@
-import React from 'react';
+// components/Game.js - Enhanced version with viral features
+import React, { useState, useEffect } from 'react';
 import { useGameState } from '../hooks/useGameState';
 import { useGameLoop } from '../hooks/useGameLoop';
+import { useAdaptiveDifficulty } from '../hooks/useAdaptiveDifficulty';
 import GameBoard from './GameBoard';
 import StartScreen from './StartScreen';
 import GameOverScreen from './GameOverScreen';
@@ -8,15 +10,40 @@ import StatusBar from './StatusBar';
 import Player from './Player';
 import Bullet from './Bullet';
 import Enemy from './Enemy';
+import BossEnemy from './BossEnemy';
 import PowerUp from './PowerUp';
 import Explosion from './Explosion';
+import AIBadge from './AIBadge';
+import LevelTransition from './LevelTransition';
+import BossWarning from './BossWarning';
+import SocialShare from './SocialShare';
+import DifficultyIndicator from './DifficultyIndicator';
+import ScorePopup from './ScorePopup';
 
 /**
- * Main Game component
+ * Main Game component with enhanced visual and AI features
  */
 function Game() {
   const { state } = useGameState();
   const { entityState } = useGameLoop();
+  
+  // Player stats for adaptive difficulty
+  const [playerDeaths, setPlayerDeaths] = useState(0);
+  const [showLevelTransition, setShowLevelTransition] = useState(false);
+  const [showBossWarning, setShowBossWarning] = useState(false);
+  const [scorePopups, setScorePopups] = useState([]);
+  const [playerVelocity, setPlayerVelocity] = useState({ x: 0, y: 0 });
+  const [lastPlayerPos, setLastPlayerPos] = useState({ x: 0 });
+
+  // AI features
+  const { difficultyMultiplier, playerSkillRating } = useAdaptiveDifficulty(
+    state.score,
+    playerDeaths,
+    state.level
+  );
+  
+  // Boss enemy state
+  const [bossEnemy, setBossEnemy] = useState(null);
   
   const {
     player,
@@ -27,6 +54,79 @@ function Game() {
     powerUps,
     explosions
   } = entityState;
+  
+  // Track player deaths
+  useEffect(() => {
+    if (state.lives < 3 - playerDeaths) {
+      setPlayerDeaths(prev => prev + 1);
+    }
+  }, [state.lives, playerDeaths]);
+  
+  // Track player velocity for AI targeting
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (player && lastPlayerPos.x !== player.x) {
+        const velocityX = player.x - lastPlayerPos.x;
+        setPlayerVelocity({ x: velocityX, y: 0 });
+        setLastPlayerPos({ x: player.x });
+      } else {
+        setPlayerVelocity({ x: 0, y: 0 });
+      }
+    }, 100);
+    
+    return () => clearInterval(interval);
+  }, [player, lastPlayerPos]);
+  
+  // Show level transition
+  useEffect(() => {
+    if (state.status === 'playing' && state.level > 1) {
+      setShowLevelTransition(true);
+      
+      // Check if this level should have a boss
+      if (state.level % 5 === 0 && !bossEnemy) {
+        // Schedule boss warning after level transition
+        setTimeout(() => {
+          setShowBossWarning(true);
+          
+          // Create boss after warning
+          setTimeout(() => {
+            setBossEnemy({
+              x: 300 - 60,
+              y: 100,
+              width: 120,
+              height: 120,
+              bossType: Math.floor(state.level / 5),
+              health: 100 * Math.floor(state.level / 5),
+              maxHealth: 100 * Math.floor(state.level / 5)
+            });
+          }, 3000);
+        }, 2000);
+      }
+    }
+  }, [state.level, state.status, bossEnemy]);
+  
+  // Add score popup when score changes
+  useEffect(() => {
+    if (state.score > 0 && state.status === 'playing') {
+      // Check if enemy was just destroyed (simple heuristic)
+      const isEnemyDestroyed = enemies.length < 5 && explosions.length > 0;
+      
+      if (isEnemyDestroyed) {
+        const randomExplosion = explosions[Math.floor(Math.random() * explosions.length)];
+        if (randomExplosion) {
+          setScorePopups(prev => [
+            ...prev,
+            {
+              id: Date.now(),
+              value: 100,
+              x: randomExplosion.x,
+              y: randomExplosion.y
+            }
+          ]);
+        }
+      }
+    }
+  }, [state.score, state.status, enemies.length, explosions]);
   
   return (
     <div className="game-container">
@@ -44,6 +144,11 @@ function Game() {
               specialWeapon={state.specialWeapon}
             />
             
+            <DifficultyIndicator 
+              skillRating={playerSkillRating}
+              difficultyMultiplier={difficultyMultiplier}
+            />
+            
             <Player 
               x={player.x}
               y={player.y}
@@ -51,6 +156,19 @@ function Game() {
               height={player.height}
               isInvulnerable={state.isInvulnerable}
             />
+            
+            {/* Boss enemy */}
+            {bossEnemy && (
+              <BossEnemy
+                x={bossEnemy.x}
+                y={bossEnemy.y}
+                width={bossEnemy.width}
+                height={bossEnemy.height}
+                bossType={bossEnemy.bossType}
+                health={bossEnemy.health}
+                maxHealth={bossEnemy.maxHealth}
+              />
+            )}
             
             {/* Player bullets */}
             {bullets.map(bullet => (
@@ -125,6 +243,34 @@ function Game() {
                 color={particle.color}
               />
             ))}
+            
+            {/* Score popups */}
+            {scorePopups.map(popup => (
+              <ScorePopup
+                key={popup.id}
+                value={popup.value}
+                x={popup.x}
+                y={popup.y}
+              />
+            ))}
+            
+            {/* Level transition overlay */}
+            {showLevelTransition && (
+              <LevelTransition 
+                level={state.level} 
+                onComplete={() => setShowLevelTransition(false)} 
+              />
+            )}
+            
+            {/* Boss warning */}
+            {showBossWarning && (
+              <BossWarning 
+                onComplete={() => setShowBossWarning(false)} 
+              />
+            )}
+            
+            {/* AI badge */}
+            <AIBadge />
           </>
         )}
         
@@ -136,7 +282,16 @@ function Game() {
         )}
         
         {state.status === 'gameOver' && (
-          <GameOverScreen score={state.score} level={state.level} highScore={state.highScore} />
+          <GameOverScreen 
+            score={state.score} 
+            level={state.level} 
+            highScore={state.highScore}
+          >
+            <SocialShare 
+              score={state.score}
+              level={state.level}
+            />
+          </GameOverScreen>
         )}
       </GameBoard>
     </div>
