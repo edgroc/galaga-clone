@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { useGameState } from '../hooks/useGameState';
 import { useGameLoop } from '../hooks/useGameLoop';
-import { useAdaptiveDifficulty } from '../hooks/useAdaptiveDifficulty';
 import GameBoard from './GameBoard';
 import StartScreen from './StartScreen';
 import GameOverScreen from './GameOverScreen';
@@ -35,12 +34,20 @@ function Game() {
   const [playerVelocity, setPlayerVelocity] = useState({ x: 0, y: 0 });
   const [lastPlayerPos, setLastPlayerPos] = useState({ x: 0 });
 
-  // AI features
-  const { difficultyMultiplier, playerSkillRating } = useAdaptiveDifficulty(
-    state.score,
-    playerDeaths,
-    state.level
-  );
+  // Mock adaptive difficulty (since we don't have the actual hook implemented)
+  const [difficultyMultiplier, setDifficultyMultiplier] = useState(1.0);
+  const [playerSkillRating, setPlayerSkillRating] = useState(50);
+  
+  // Simulate skill rating changes based on score
+  useEffect(() => {
+    if (state.score > 1000) {
+      setPlayerSkillRating(75);
+      setDifficultyMultiplier(1.1);
+    } else if (state.score > 500) {
+      setPlayerSkillRating(60);
+      setDifficultyMultiplier(1.0);
+    }
+  }, [state.score]);
   
   // Boss enemy state
   const [bossEnemy, setBossEnemy] = useState(null);
