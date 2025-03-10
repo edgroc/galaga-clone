@@ -82,6 +82,8 @@
 .start-screen, .game-over {
   background: rgba(0, 0, 20, 0.85);
   animation: none;
+  padding: 30px;
+  box-sizing: border-box;
 }
 
 .start-screen h1, .game-over h1 {
@@ -248,6 +250,7 @@
 
 /* High score celebration */
 .high-score-celebration {
+  margin-top: 40px;
   position: absolute;
   top: 0;
   left: 0;
@@ -274,7 +277,7 @@
   font-family: 'Press Start 2P', cursive;
   font-size: 18px;
   color: #ff3366;
-  margin-bottom: 30px;
+  margin-bottom: 40px;
   letter-spacing: 2px;
   text-shadow: 0 0 10px rgba(255, 51, 102, 0.7);
 }
@@ -291,7 +294,7 @@
 }
 
 .controls-hint, .special-hint, .exit-hint {
-  margin: 8px 0;
+  margin: 12px 0;
   font-size: 18px;
   color: #ccccff;
 }
@@ -300,7 +303,7 @@
   display: flex;
   gap: 20px;
   justify-content: center;
-  margin: 30px 0;
+  margin: 40px 0 30px;
 }
 
 .feature {
