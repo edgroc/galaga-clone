@@ -1,5 +1,5 @@
 {
-  "name": "spaceshooter-v",
+  "name": "spaceshooter",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "deploy": "touch dist/.nojekyll && gh-pages -d dist"
   },
   "dependencies": {
     "react": "^19.0.0",
