@@ -69,7 +69,7 @@ export function useGameLoop() {
   // Memoized callback for entity reset to include in dependency array
   const resetEntitiesCallback = useCallback(() => {
     resetEntities();
-  }, [resetEntities, state.level]);
+  }, [resetEntities]);
   
   // Initialize level
   useEffect(() => {
