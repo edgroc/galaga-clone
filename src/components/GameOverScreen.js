@@ -83,9 +83,6 @@ function GameOverScreen({ score, level, highScore, children }) {
         </div>
       )}
       
-      <div className="ai-powered-footer">
-        Powered by AI-Enhanced Gameplay
-      </div>
     </div>
   );
 }

@@ -1,11 +1,10 @@
 import React from 'react';
-import AIBadge from './AIBadge';
 
 function StartScreen({ highScore }) {
   return (
     <div className="start-screen">
       <h1>GALACTIC INVADERS</h1>
-      <div className="game-tagline">AI-POWERED ARCADE ACTION</div>
+      <div className="game-tagline">ARCADE ACTION</div>
       
       <div className="start-screen-ship">
         <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className="title-ship">
@@ -43,7 +42,7 @@ function StartScreen({ highScore }) {
         </div>
         <div className="feature">
           <span className="feature-icon">🧠</span>
-          <span className="feature-text">AI ENEMY BEHAVIOR</span>
+          <span className="feature-text">SMART ENEMY BEHAVIOR</span>
         </div>
         <div className="feature">
           <span className="feature-icon">⭐</span>
@@ -53,7 +52,6 @@ function StartScreen({ highScore }) {
       
       <div className="high-score">High Score: {highScore}</div>
       
-      <AIBadge />
     </div>
   );
 }

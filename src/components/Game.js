@@ -12,7 +12,6 @@ import Enemy from './Enemy';
 import BossEnemy from './BossEnemy';
 import PowerUp from './PowerUp';
 import Explosion from './Explosion';
-import AIBadge from './AIBadge';
 import LevelTransition from './LevelTransition';
 import BossWarning from './BossWarning';
 import SocialShare from './SocialShare';
@@ -286,8 +285,6 @@ function Game() {
               />
             )}
             
-            {/* AI badge */}
-            <AIBadge />
           </>
         )}
         

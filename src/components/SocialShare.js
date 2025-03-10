@@ -1,7 +1,7 @@
 import React from 'react';
 
 function SocialShare({ score, level }) {
-  const shareText = `I just reached Level ${level} with a score of ${score} on Galactic Invaders - an #AI-enhanced game! Can you beat my score? #GameDev #AIGaming`;
+  const shareText = `I just reached Level ${level} with a score of ${score} on Galactic Invaders! Can you beat my score? #GameDev #AIGaming`;
   const shareUrl = window.location.href;
   
   const shareToTwitter = () => {
