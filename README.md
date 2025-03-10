@@ -47,3 +47,44 @@ cd galaga-clone'
 'npm run dev'
 
 4. Open http://localhost:5173 to view the game in your browser.
+
+## Building for Production
+To create a production build:
+'npm run build'
+
+The build artifacts will be stored in the dist/ directory.
+
+## Deployment
+This project can be deployed to GitHub Pages:
+'npm run deploy'
+
+## Project Structure
+├── public/           # Static assets
+├── src/              # Source files
+│   ├── assets/       # Images and other assets
+│   ├── components/   # React components
+│   ├── hooks/        # Custom React hooks
+│   ├── config/       # Game configuration files
+│   ├── utils/        # Utility functions
+│   ├── App.jsx       # Main App component
+│   └── main.jsx      # Entry point
+├── index.html        # HTML template
+├── vite.config.js    # Vite configuration
+└── package.json      # Dependencies and scripts
+
+## Game Mechanics
+
+Players control a spaceship at the bottom of the screen
+Enemies move in formation and periodically dive-bomb toward the player
+Destroying enemies earns points and occasionally drops power-ups
+Each level increases in difficulty with faster enemies and new attack patterns
+Boss battles feature larger enemies with more complex attack patterns and higher health
+
+## License
+This project is open source and available under the MIT License. Refer to the LICENSE file for details.
+
+## Acknowledgments
+
+Original Galaga game by Namco
+Built with React and Vite
+Created as a learning project for modern web development techniques and experimental use of Claude for source generation
