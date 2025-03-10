@@ -31,7 +31,6 @@ function Game() {
   const [showLevelTransition, setShowLevelTransition] = useState(false);
   const [showBossWarning, setShowBossWarning] = useState(false);
   const [scorePopups, setScorePopups] = useState([]);
-  const [playerVelocity, setPlayerVelocity] = useState({ x: 0, y: 0 });
   const [lastPlayerPos, setLastPlayerPos] = useState({ x: 0 });
 
   // Mock adaptive difficulty (since we don't have the actual hook implemented)
@@ -69,20 +68,12 @@ function Game() {
     }
   }, [state.lives, playerDeaths]);
   
-  // Track player velocity for AI targeting
+  // Track player position
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (player && lastPlayerPos.x !== player.x) {
-        const velocityX = player.x - lastPlayerPos.x;
-        setPlayerVelocity({ x: velocityX, y: 0 });
-        setLastPlayerPos({ x: player.x });
-      } else {
-        setPlayerVelocity({ x: 0, y: 0 });
-      }
-    }, 100);
-    
-    return () => clearInterval(interval);
-  }, [player, lastPlayerPos]);
+    if (player) {
+      setLastPlayerPos({ x: player.x });
+    }
+  }, [player]);
   
   // Show level transition
   useEffect(() => {

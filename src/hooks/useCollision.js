@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useGameState, GameActions } from './useGameState';
-import CONFIG, { DIFFICULTY } from '../config/gameConfig';
+import CONFIG from '../config/gameConfig';
 
 /**
  * Custom hook for collision detection and handling

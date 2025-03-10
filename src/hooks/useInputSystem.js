@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useGameState, GameActions } from './useGameState';
 
 /**
@@ -21,8 +21,8 @@ export function useInputSystem() {
   // Track last fire time for rate limiting
   const [lastFireTime, setLastFireTime] = useState(0);
   
-  // Key mappings configuration
-  const keyMap = {
+  // Key mappings configuration - wrap in useMemo to prevent unnecessary rerenders
+  const keyMap = useMemo(() => ({
     'ArrowLeft': 'moveLeft',
     'ArrowRight': 'moveRight',
     ' ': 'fire',
@@ -33,7 +33,7 @@ export function useInputSystem() {
     'p': 'pause',
     'P': 'pause',
     'Escape': 'exit'
-  };
+  }), []);
   
   // Handle key down events
   const handleKeyDown = useCallback((e) => {
