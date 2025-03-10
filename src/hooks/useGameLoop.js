@@ -264,7 +264,10 @@ export function useGameLoop() {
       
       // 12. Check level completion
       if (enemies.length === 0 && diveBombers.length === 0) {
-        dispatch(GameActions.nextLevel());
+        // Only advance level if we're not already transitioning
+        if (!showLevelTransition) {
+          dispatch(GameActions.nextLevel());
+		}		  
       }
       
     }, CONFIG.game.tickRate);

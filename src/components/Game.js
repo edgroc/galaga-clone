@@ -80,14 +80,19 @@ function Game() {
     if (state.status === 'playing' && state.level > 1) {
       setShowLevelTransition(true);
       
+      // Make sure we don't accidentally end the game during transition
+      const transitionTimer = setTimeout(() => {
+        setShowLevelTransition(false);
+      }, 2000);
+      
       // Check if this level should have a boss
       if (state.level % 5 === 0 && !bossEnemy) {
         // Schedule boss warning after level transition
-        setTimeout(() => {
+        const bossWarningTimer = setTimeout(() => {
           setShowBossWarning(true);
           
           // Create boss after warning
-          setTimeout(() => {
+          const bossTimer = setTimeout(() => {
             setBossEnemy({
               x: 300 - 60,
               y: 100,
@@ -98,10 +103,24 @@ function Game() {
               maxHealth: 100 * Math.floor(state.level / 5)
             });
           }, 3000);
+          
+          return () => clearTimeout(bossTimer);
         }, 2000);
+        
+        return () => clearTimeout(bossWarningTimer);
       }
+      
+      return () => clearTimeout(transitionTimer);
     }
   }, [state.level, state.status, bossEnemy]);
+  
+  
+  // Add Console logging for state levels and enemies
+  useEffect(() => {
+    if (state.level > 1) {
+      console.log(`Level ${state.level} started with ${enemies.length} enemies`);
+    }
+  }, [state.level, enemies.length]);
   
   // Add score popup when score changes
   useEffect(() => {
