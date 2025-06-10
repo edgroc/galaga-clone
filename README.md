@@ -85,6 +85,6 @@ This project is open source and available under the MIT License. Refer to the LI
 
 ## Acknowledgments
 
-Original Galaga game by Namco
+This project was inspired by the original Galaga game by Namco
 Built with React and Vite
 Created as a learning project for modern web development techniques and experimental use of Claude for source generation
